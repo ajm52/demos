@@ -1,11 +1,12 @@
 #include <boost/signals2.hpp>
+#include <future>
 #include <thread>
 #include <chrono>
 #include <iostream>
 
 struct DemoSlot
 {
-    std::__1::chrono::steady_clock::time_point operator()()
+    std::chrono::system_clock::time_point operator()()
     {
         auto beforeSleep = std::chrono::high_resolution_clock::now(); // timestamp BEFORE the callback simulated computation.
         std::this_thread::sleep_for(std::chrono::seconds(2));         // simulating computation ...
@@ -16,7 +17,7 @@ struct DemoSlot
 int main()
 {
     std::cout << "beginning sigslot-callback-timing demo ...\n";
-    boost::signals2::signal<std::__1::chrono::steady_clock::time_point()> sig;
+    boost::signals2::signal<std::chrono::system_clock::time_point()> sig;
     DemoSlot slot;
     sig.connect(slot);
     auto beforeSig = std::chrono::high_resolution_clock::now(); // timestamp BEFORE the signal
