@@ -14,7 +14,7 @@ struct DummyFunc
     {
         if (index >= mList.size_)
             return;
-        std::cout << "T" << std::to_string(id) << " is locking mutex "
+        std::cout << "T" << std::to_string(id) << " is trying to lock mutex "
                   << std::to_string(index) << std::endl;
         {
             std::lock_guard<std::mutex> lg(mList.data_.get()->at(index));
@@ -39,7 +39,12 @@ int main()
     if (!m1.data_)
         std::cout << "1" << std::endl;
     std::cout << m3.validate() << std::endl;
-    //std::thread t1(DummyFunc(), 1, 4, mutices);
-    //std::thread t2(DummyFunc(), 2, 4, mutices);
+    {
+        std::lock_guard<std::mutex> lg((*m3.data_)[4]);
+    }
+    std::thread t1(DummyFunc(), 1, 4, std::ref(m3));
+    std::thread t2(DummyFunc(), 2, 4, std::ref(m3));
+    t1.join();
+    t2.join();
     return 0;
 }
