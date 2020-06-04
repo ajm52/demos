@@ -4,7 +4,12 @@
 
 struct MutexList
 {
-    MutexList(unsigned size) : data_(), size_(size) {}
+    MutexList(unsigned size = 0)
+        : size_(size),
+          data_(new std::vector<std::mutex>(size_)) {}
+
+    MutexList(MutexList &&);
+    MutexList &operator=(MutexList &&);
 
     /**
      * builds the list of mutices.
@@ -16,6 +21,6 @@ struct MutexList
      * validates that build() worked correctly.
      */
     bool validate();
-    std::unique_ptr<std::vector<std::mutex>> data_;
     unsigned size_;
+    std::unique_ptr<std::vector<std::mutex>> data_;
 };
