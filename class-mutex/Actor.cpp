@@ -12,6 +12,7 @@ void Actor::init()
 
 void Actor::run()
 {
+#ifdef DEMO_1
     while (true)
     {
         std::cout << std::this_thread::get_id() << " is attempting to lock mutex.\n";
@@ -35,4 +36,21 @@ void Actor::run()
         std::cout << std::this_thread::get_id() << " has unlocked the mutex; sleeping for 3 seconds...\n\n\n";
         std::this_thread::sleep_for(std::chrono::seconds(3));
     }
+#endif
+#ifdef DEMO_2
+    std::cout << "Thread " << id << " is attempting to lock mutex.\n";
+    {
+        std::lock_guard<std::mutex> lg(safequeue.getQueueMutexRef());
+        std::cout << "Thread " << id << " has locked mutex.\n";
+        safequeue.getQueue().push(this);
+        std::cout << "Thread " << id << " has entered SafeQueue.\n";
+    }
+
+    safequeue.getCvRef().notify_one();
+    std::cout << "Thread " << id << " has notified Listener; waiting to hear back.\n";
+    //std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::unique_lock<std::mutex> ul(m);
+    cv.wait(ul, [this] { return hasBeenServiced(); });
+    std::cout << "Thread " << id << " has been serviced! Bye for now.\n";
+#endif
 }

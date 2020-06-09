@@ -18,5 +18,19 @@ One thing I noticed was that calling detach() from inside Actor::init() made the
 
 Now, we are going to make the thread actions slightly more interesting, throwing in a locally accessible data structure, some condition variables, and another thread-based class.
 
-Listener will "wait" to be notified, at which point it will look in its queue, pull all Actors out, place them in the next location, and notify back. This should be a little more interesting.
+SafeQueue is the intermediary data structure, accessible by Actors and the Listener. Actors take turns "entering" SafeQueue, while Listener "waits" to be notified of their entry. Upon being notified, Listener removes all Actors in the SafeQueue, notifying them after doing so. All of these actions are done with thread safety kept at the forefront:
 
+- Actors must lock SafeQueue's mutex before "entering"
+- Listener must "wait" to be notified before looking at SafeQueue
+- Listener must lock an Actor's mutex before changing the service flag and notifying
+
+# result 2
+
+Success! It works. Though there were multiple subtleties that threw me off here and there, the biggest one was dealing with Listener's wait/lock.
+
+From what I can tell, constructing a <unique_lock> with a <mutex> reference will lock the mutex as soon as it is available to do so. Thus, all I did was write a wait() loop to guard against spurious wakeups; owning the lock would permit Listener to break the loop. We place the wait() call inside a try/catch, just in case we happen to encounter some sort of exception.
+
+Other worthy mentions:
+
+- when creating threads within respective init() methods, be sure to move the thread to a member variable, so it can be joined from another thread of execution (i.e. main()).
+- when working with thread-related class member data (i.e. condvars, mutices), always implement getters to return by reference. Returning a pointer can result in unwarranted behavior.
